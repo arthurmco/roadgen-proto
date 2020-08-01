@@ -4,13 +4,14 @@ import random
 
 
 terrain_types = {
+    "water": (96, 128, 255),
     "deep_water": (6, 38, 165),
     "grass": (32, 164, 32),
 }
 
 
 def is_terrain_buildable(old_value):
-    return old_value != terrain_types['deep_water']
+    return old_value != terrain_types['deep_water'] and old_value != terrain_types['water']
 
 def get_center_offset_from_seed(seed):
     """
@@ -104,7 +105,41 @@ def generate_terrain(img, seed):
         return rndarr[i]
 
 
+    def is_water(x, y, a, b, c, is_negative):
+        """
+        Calculate if a certain pixel is a water pixel
+
+        Usually they lie in the corners of deep water pixels
+        """
+        deep_waterinterval = 128 + (c % 1024)
+        deep_waterx = a % 512
+        deep_watery = b % 512
+        deep_watersize = a % 128 + b % 128
+
+        rx = x % deep_waterinterval
+        ry = y % deep_waterinterval
+
+        if is_negative:
+            deep_watersize = deep_watersize * 2
+
+        water_limit = 25
+
+        wx1 = deep_waterx-deep_watersize
+        wx2 = deep_waterx+deep_watersize 
+        wy1 = deep_watery-deep_watersize
+        wy2 = deep_watery+deep_watersize
+
+        if rx > wx1 and rx < wx2 and ry > wy1 and ry < wy2:
+            if abs(wx1-rx) <= water_limit or abs(rx-wx2) <= water_limit or \
+                abs(wy1-ry) <= water_limit or abs(ry-wy2) <= water_limit:
+                return True
+
+        return False
+
     def is_deep_water(x, y, a, b, c, is_negative):
+        """
+        Calculate if a certain pixel is a deep water pixel
+        """
         deep_waterinterval = 128 + (c % 1024)
         deep_waterx = a % 512
         deep_watery = b % 512
@@ -129,8 +164,13 @@ def generate_terrain(img, seed):
     w, h = img.size
     for y in range(h):
         for x in range(w):
+
             pixel = terrain_types['deep_water'] if is_deep_water(x, y, a, b, c,
                 seed < 0) is True else terrain_types['grass']
+
+            if is_water(x, y, a, b, c, seed < 0):
+                pixel = terrain_types['water']
+
             img.putpixel((x, y), generate(x, y, pixel, seed))
 
     return img
