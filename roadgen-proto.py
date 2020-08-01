@@ -131,7 +131,12 @@ def create_seed():
 
     return seed
 
-seed = create_seed()
+
+if len(sys.argv) > 1:
+    seed = int(sys.argv[1])
+else:
+    seed = create_seed()
+    
 print(f"your seed is {seed}")
 
 terrain_image = Image.new("RGB", (1600, 1200), (0, 0, 0))
