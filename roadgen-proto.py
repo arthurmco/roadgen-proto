@@ -47,9 +47,12 @@ def is_path(x, y, old_value, seed):
     dx, dy = get_center_offset_from_seed(seed)
    
     if not is_terrain_buildable(old_value):
-        return False    
+        return False
 
-    if (x % 200 == dx or y % 200 == dy) and x > 0 and y > 0:
+    def on_bias(vx, vcenter, vdx, vbias):
+        return vx % vcenter >= vdx-vbias and vx % vcenter <= vdx+vbias
+
+    if (on_bias(x, 200, dx, 1) or on_bias(y, 200, dy, 1)) and x > 0 and y > 0:
         return True
 
     return False
@@ -106,8 +109,6 @@ def generate_terrain(img, seed):
         deep_waterx = a % 512
         deep_watery = b % 512
         deep_watersize = a % 128 + b % 128
-
-        print(f"\rwi: {deep_waterinterval}, wx: {deep_waterx}, wy: {deep_watery}, wsize: {deep_watersize}", end="")
 
         rx = x % deep_waterinterval
         ry = y % deep_waterinterval
